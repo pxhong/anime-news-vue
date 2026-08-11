@@ -1,0 +1,26 @@
+# 项目依赖
+node_modules/
+
+# vite打包输出
+dist/
+dist-ssr/
+
+# vite缓存
+.vite/
+
+# 环境变量
+.env
+.env.local
+
+# 日志文件
+*.log
+
+#系统、编辑器文件
+.DS_Store
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

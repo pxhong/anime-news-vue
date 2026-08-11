@@ -1,0 +1,55 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #ffffff;
+  color: #212121;
+}
+
+a {
+  text-decoration: none;
+}
+
+input, textarea, button {
+  font-family: inherit;
+  font-size: 14px;
+}
+
+img {
+  display: block;
+}
+
+/* 通用容器，统一页面宽度边距 */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* 通用按钮样式 */
+.btn {
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-primary {
+  background: #FB7299;
+  color: #fff;
+}
+.btn-primary:hover {
+  background: #e86288;
+}
+
+/* 空状态提示 */
+.empty-tip {
+  text-align: center;
+  padding: 60px 0;
+  color: #999;
+  font-size: 15px;
+}
