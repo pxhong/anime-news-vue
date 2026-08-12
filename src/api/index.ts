@@ -1,19 +1,56 @@
 import axios, { AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const getBaseURL = (): string => {
-  if (import.meta.env.PROD) {
-    return 'https://anime-news-backend-production.up.railway.app/api';
-  }
-  return 'http://127.0.0.1:8000/api';
-};
+const BASE_URL = 'https://anime-news-backend-production.up.railway.app/api';
 
 const api = axios.create({
-  baseURL: getBaseURL(),
+  baseURL: BASE_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// ✅ 通用 URL 修复函数
+const fixImageUrl = (url: string): string => {
+  if (!url) return '';
+  if (typeof url !== 'string') return url;
+  
+  // 如果是 http，强制转为 https
+  if (url.startsWith('http://')) {
+    return url.replace('http://', 'https://');
+  }
+  
+  // 如果是以 /media/ 开头的相对路径，拼接完整地址
+  if (url.startsWith('/media/')) {
+    return `https://anime-news-backend-production.up.railway.app${url}`;
+  }
+  
+  return url;
+};
+
+// ✅ 递归修复所有 URL
+const fixAllUrls = (data: any): any => {
+  if (!data) return data;
+  if (typeof data === 'string') {
+    return fixImageUrl(data);
+  }
+  if (Array.isArray(data)) {
+    return data.map(item => fixAllUrls(item));
+  }
+  if (typeof data === 'object') {
+    const result: any = {};
+    for (const key in data) {
+      // 处理常见图片字段
+      if (['cover', 'avatar', 'avatar_url', 'file', 'url', 'image', 'photo', 'picture'].includes(key)) {
+        result[key] = fixImageUrl(data[key]);
+      } else {
+        result[key] = fixAllUrls(data[key]);
+      }
+    }
+    return result;
+  }
+  return data;
+};
 
 // 请求拦截器 - 自动添加 Token
 api.interceptors.request.use(
@@ -30,9 +67,12 @@ api.interceptors.request.use(
   }
 );
 
-// 响应拦截器 - 处理 Token 过期
+// ✅ 响应拦截器 - 自动修复所有 HTTP 链接
 api.interceptors.response.use(
   (response: AxiosResponse) => {
+    if (response.data) {
+      response.data = fixAllUrls(response.data);
+    }
     return response;
   },
   (error: AxiosError) => {

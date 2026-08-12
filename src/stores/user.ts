@@ -49,7 +49,7 @@ export const useUserStore = defineStore('user', () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_info');
-    window.location.href = '/anime-news-vue/login';
+    window.location.href = '/anime-news-vue/';
   };
 
   const restoreUser = () => {

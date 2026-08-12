@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 import Home from '@/pages/Home.vue'
 import News from '@/pages/News.vue'
 import About from '@/pages/About.vue'
@@ -23,6 +24,24 @@ const routes = [
 const router = createRouter({
   history: createWebHistory('/anime-news-vue/'),
   routes
+})
+
+// ✅ 路由守卫
+router.beforeEach((to, from, next) => {
+  const userStore = useUserStore()
+  userStore.restoreUser()
+
+  // 需要登录才能访问的页面
+  if (to.meta.requiresAuth && !userStore.isLoggedIn) {
+    next('/')  // 跳转到首页
+  } 
+  // 登录/注册页面（已登录用户不能访问）
+  else if (to.meta.guest && userStore.isLoggedIn) {
+    next('/home')
+  } 
+  else {
+    next()
+  }
 })
 
 export default router
