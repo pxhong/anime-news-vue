@@ -2,8 +2,9 @@
   <div class="about-page">
     <h2 class="page-title">关于本站</h2>
     <div class="content-card">
-      <p>这是个人制作的网站，所以略有瑕疵请见谅</p>
       <p>你所热爱的就是你的生活</p>
+      <p>想赞助我的可以加我的联系方式哈哈哈哈哈</p>
+      <p>如果有什么更好的优化这个网站的建议可以私信我1586176652@qq.com 0v0</p>
     </div>
   </div>
 </template>

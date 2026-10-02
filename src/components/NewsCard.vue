@@ -1,35 +1,37 @@
 <template>
   <div class="news-card" @click="$emit('click')">
     <div class="cover">
-      <!-- 如果有封面图则显示 -->
-      <img 
-        v-if="item.cover" 
-        :src="getImageUrl(item.cover)" 
-        :alt="item.title" 
-        loading="lazy"
-        @error="handleImageError"
-      />
-      <!-- 没有封面图则显示占位 -->
-      <div v-else class="cover-placeholder">
-        <span>📰</span>
+      <img v-if="item.cover && !imgFailed" :src="getImageUrl(item.cover)" :alt="item.title"
+        loading="lazy" @error="imgFailed = true" />
+      <div v-else class="cover-fallback">
+        <svg v-if="item.work_type === 'video'" viewBox="0 0 24 24" class="fb-icon"><path d="M8 5v14l11-7z"/></svg>
+        <svg v-else viewBox="0 0 24 24" class="fb-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       </div>
+      <span v-if="item.work_type === 'video'" class="play-tag">
+        <svg viewBox="0 0 24 24" class="play-icon"><path d="M8 5v14l11-7z"/></svg>
+      </span>
     </div>
     <div class="info">
       <h3 class="title">{{ item.title }}</h3>
       <p class="summary">{{ item.content || item.summary || '暂无内容' }}</p>
       <div class="meta">
-        <span class="author">👤 {{ item.author?.username || '匿名' }}</span>
-        <span class="date">📅 {{ formatDate(item.created_at || item.date) }}</span>
-        <span class="type" :class="item.work_type">
-          {{ item.work_type === 'article' ? '文章' : '视频' }}
+        <span class="author">
+          <svg viewBox="0 0 24 24" class="meta-icon"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          {{ item.author?.username || '匿名' }}
         </span>
+        <span class="meta-item">
+          <svg viewBox="0 0 24 24" class="meta-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          {{ formatViewCount(item.views) }}
+        </span>
+        <span class="type" :class="item.work_type">{{ item.work_type === 'article' ? '文章' : '视频' }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-// 定义 Props - 兼容本地数据和后端数据
+import { ref } from 'vue';
+import { getImageUrl, formatViewCount } from '@/utils/media';
 defineProps<{
   item: {
     id: number;
@@ -37,185 +39,53 @@ defineProps<{
     content?: string;
     summary?: string;
     cover: string | null;
+    views?: number;
     work_type?: 'article' | 'video';
     created_at?: string;
     date?: string;
-    author?: {
-      username: string;
-    };
+    author?: { username: string };
   };
 }>();
 
-// 定义事件
-defineEmits<{
-  (e: 'click'): void;
-}>();
+defineEmits<{ (e: 'click'): void }>();
 
-// 获取图片完整URL - 自动处理 http -> https
-const getImageUrl = (path: string) => {
-  if (!path) return '';
-  
-  // 如果是 http，强制转为 https
-  if (path.startsWith('http://')) {
-    return path.replace('http://', 'https://');
-  }
-  
-  // 如果已经是 https，直接返回
-  if (path.startsWith('https://')) {
-    return path;
-  }
-  
-  // 如果是 /media/ 开头的相对路径
-  if (path.startsWith('/media/')) {
-    return `https://anime-news-backend-production.up.railway.app${path}`;
-  }
-  
-  // 如果是 media/ 开头的相对路径（没有前导斜杠）
-  if (path.startsWith('media/')) {
-    return `https://anime-news-backend-production.up.railway.app/${path}`;
-  }
-  
-  // 其他情况，尝试拼接
-  return path;
-};
+const imgFailed = ref(false);
 
-// 图片加载失败处理
-const handleImageError = (e: Event) => {
-  const img = e.target as HTMLImageElement;
-  img.style.display = 'none';
-  // 显示占位符
-  const parent = img.parentElement;
-  if (parent) {
-    const placeholder = document.createElement('div');
-    placeholder.className = 'cover-placeholder';
-    placeholder.innerHTML = '<span>📰</span>';
-    parent.appendChild(placeholder);
-  }
-};
 
-// 格式化日期 - 兼容 created_at 和 date
-const formatDate = (dateString: string) => {
-  if (!dateString) return '未知日期';
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  } catch {
-    return '未知日期';
-  }
-};
+
+
 </script>
 
 <style scoped>
-.news-card {
-  display: flex;
-  gap: 16px;
-  background: #f4f4f4;
-  border-radius: 12px;
-  padding: 12px;
-  cursor: pointer;
-  transition: all 0.22s ease;
-}
-.news-card:hover {
-  background: #eeeeee;
-  transform: translateY(-3px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
-}
+.news-card { display: flex; gap: 16px; background: #fff; border: 1px solid #f0f1f2;
+  border-radius: 8px; padding: 12px; cursor: pointer; transition: box-shadow 0.2s, transform 0.2s; }
+.news-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
 
-.cover {
-  width: 240px;
-  height: 136px;
-  flex-shrink: 0;
-  border-radius: 8px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #e8e8e8;
-  position: relative;
-}
+.cover { position: relative; width: 168px; height: 94px; flex-shrink: 0; border-radius: 6px;
+  overflow: hidden; background: #f1f2f3; }
+.cover img { width: 100%; height: 100%; object-fit: cover; }
+.cover-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.fb-icon { width: 30px; height: 30px; fill: #c9ccd0; }
+.play-tag { position: absolute; right: 6px; bottom: 6px; width: 26px; height: 26px; border-radius: 50%;
+  background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; }
+.play-icon { width: 11px; height: 11px; fill: #fff; margin-left: 1px; }
 
-.cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+.info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
+.title { font-size: 15px; color: #18191c; margin: 0 0 6px; line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.summary { font-size: 13px; color: #9499a0; line-height: 1.5; margin: 0 0 8px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.meta { display: flex; align-items: center; gap: 12px; font-size: 12px; color: #9499a0; }
+.author { display: flex; align-items: center; gap: 4px; color: #61666d; flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta-item { display: flex; align-items: center; gap: 4px; }
+.meta-icon { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; }
+.type { padding: 1px 10px; border-radius: 10px; font-size: 11px; }
+.type.article { background: #f0f9f2; color: #27ae60; }
+.type.video { background: #f0f6fd; color: #3498db; }
 
-.cover-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40px;
-  color: #ccc;
-  background: #f0f0f0;
-}
-
-.info {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  flex: 1;
-  min-width: 0;
-}
-
-.title {
-  font-size: 17px;
-  color: #222;
-  margin: 0 0 6px 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.summary {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.6;
-  margin: 0 0 8px 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  font-size: 13px;
-  color: #999;
-}
-
-.meta .type {
-  padding: 1px 10px;
-  border-radius: 10px;
-  font-size: 11px;
-}
-
-.meta .type.article {
-  background: #e8f5e9;
-  color: #4caf50;
-}
-
-.meta .type.video {
-  background: #e3f2fd;
-  color: #2196f3;
-}
-
-/* 手机端适配 */
 @media (max-width: 768px) {
-  .news-card {
-    flex-direction: column;
-  }
-  .cover {
-    width: 100%;
-    height: 200px;
-  }
+  .news-card { flex-direction: column; }
+  .cover { width: 100%; height: 180px; }
 }
 </style>

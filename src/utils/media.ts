@@ -3,7 +3,7 @@
  * 统一所有页面对后端地址、数字、日期的处理
  */
 
-export const API_BASE = 'https://anime-news-backend-production.up.railway.app';
+export const API_BASE = 'http://42.193.218.113:8000';
 
 /** 图片完整地址：兼容相对路径 /media/、media/ 与绝对地址 */
 export function getImageUrl(path?: string | null): string {

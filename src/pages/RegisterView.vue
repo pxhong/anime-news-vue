@@ -1,73 +1,179 @@
 <template>
   <div class="register-container">
     <div class="register-card">
-      <h1>📝 注册</h1>
-      <p class="subtitle">注册后系统将自动分配账号</p>
-      
-      <div v-if="registered" class="success-box">
-        <div class="success-icon">🎉</div>
-        <h3>注册成功！</h3>
-        <p class="account-info">你的账号是：</p>
-        <p class="account-number">{{ newAccount }}</p>
-        <button @click="goToLogin" class="login-btn-success">立即登录</button>
+      <div class="brand">
+        <h1>创建账号</h1>
+        <p class="subtitle">使用邮箱注册，系统将自动为您分配昵称与账号</p>
       </div>
-      
-      <form v-else @submit.prevent="handleRegister">
+
+      <form @submit.prevent="handleRegister" class="register-form">
+        <!-- 邮箱 -->
         <div class="form-group">
-          <label>昵称</label>
-          <input v-model="username" type="text" required placeholder="请设置你的昵称" />
+          <label for="email">邮箱</label>
+          <input
+            id="email"
+            v-model="email"
+            type="email"
+            required
+            placeholder="请输入邮箱地址"
+            autocomplete="email"
+          />
         </div>
+
+        <!-- 验证码 -->
         <div class="form-group">
-          <label>密码</label>
-          <input v-model="password" type="password" required placeholder="至少6位密码" />
+          <label for="code">验证码</label>
+          <div class="code-row">
+            <input
+              id="code"
+              v-model="code"
+              type="text"
+              required
+              maxlength="6"
+              placeholder="请输入6位验证码"
+              class="code-input"
+            />
+            <button
+              type="button"
+              class="send-code-btn"
+              :disabled="sending || countdown > 0"
+              @click="sendCode"
+            >
+              {{ countdown > 0 ? `${countdown}秒后重发` : (sending ? '发送中...' : '获取验证码') }}
+            </button>
+          </div>
         </div>
+
+        <!-- 密码 -->
         <div class="form-group">
-          <label>确认密码</label>
-          <input v-model="confirmPassword" type="password" required placeholder="请再次输入密码" />
+          <label for="password">密码</label>
+          <input
+            id="password"
+            v-model="password"
+            type="password"
+            required
+            minlength="6"
+            placeholder="至少6位密码"
+            autocomplete="new-password"
+          />
         </div>
-        <button type="submit" :disabled="loading" class="register-btn">
-          {{ loading ? '注册中...' : '注册' }}
+
+        <!-- 确认密码 -->
+        <div class="form-group">
+          <label for="confirmPassword">确认密码</label>
+          <input
+            id="confirmPassword"
+            v-model="confirmPassword"
+            type="password"
+            required
+            minlength="6"
+            placeholder="请再次输入密码"
+            autocomplete="new-password"
+          />
+        </div>
+
+        <button type="submit" :disabled="loading" class="submit-btn">
+          {{ loading ? '注册中...' : '注 册' }}
         </button>
-        <p class="error" v-if="error">{{ error }}</p>
-        <p class="login-link">已有账号？<router-link to="/login">立即登录</router-link></p>
+
+        <p v-if="error" class="error">{{ error }}</p>
+        <p v-if="successMsg" class="success">{{ successMsg }}</p>
+
+        <p class="switch-link">
+          已有账号？<router-link to="/login">立即登录</router-link>
+        </p>
       </form>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
+import api from '@/api/index';
 
 const router = useRouter();
 const userStore = useUserStore();
 
-const username = ref('');
+const email = ref('');
+const code = ref('');
 const password = ref('');
 const confirmPassword = ref('');
 const loading = ref(false);
+const sending = ref(false);
 const error = ref('');
-const registered = ref(false);
-const newAccount = ref('');
+const successMsg = ref('');
+const countdown = ref(0);
+let timer: number | null = null;
 
+const validateEmail = (val: string) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+};
+
+// 发送验证码
+const sendCode = async () => {
+  error.value = '';
+  successMsg.value = '';
+
+  if (!email.value) {
+    error.value = '请先输入邮箱地址';
+    return;
+  }
+  if (!validateEmail(email.value)) {
+    error.value = '邮箱格式不正确';
+    return;
+  }
+
+  sending.value = true;
+  try {
+    const res = await api.post('/send-code/', { email: email.value });
+    successMsg.value = res.data.detail || '验证码已发送';
+    // 开始倒计时
+    countdown.value = 60;
+    timer = window.setInterval(() => {
+      countdown.value--;
+      if (countdown.value <= 0 && timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }, 1000);
+  } catch (err: any) {
+    error.value = err.response?.data?.detail || err.response?.data?.email?.[0] || '验证码发送失败';
+  } finally {
+    sending.value = false;
+  }
+};
+
+// 注册
 const handleRegister = async () => {
-  if (password.value !== confirmPassword.value) {
-    error.value = '两次输入的密码不一致';
+  error.value = '';
+  successMsg.value = '';
+
+  if (!validateEmail(email.value)) {
+    error.value = '邮箱格式不正确';
+    return;
+  }
+  if (code.value.length !== 6) {
+    error.value = '请输入6位验证码';
     return;
   }
   if (password.value.length < 6) {
     error.value = '密码至少6位';
     return;
   }
+  if (password.value !== confirmPassword.value) {
+    error.value = '两次输入的密码不一致';
+    return;
+  }
 
   loading.value = true;
-  error.value = '';
-  
   try {
-    const res = await userStore.register(username.value, password.value);
-    newAccount.value = res.data.account;
-    registered.value = true;
+    const res = await userStore.register(email.value, code.value, password.value);
+    successMsg.value = '注册成功，正在进入...';
+    setTimeout(() => {
+      router.push('/home');
+    }, 1000);
   } catch (err: any) {
     error.value = err.response?.data?.detail || '注册失败，请重试';
   } finally {
@@ -75,9 +181,9 @@ const handleRegister = async () => {
   }
 };
 
-const goToLogin = () => {
-  router.push('/login');
-};
+onUnmounted(() => {
+  if (timer) clearInterval(timer);
+});
 </script>
 
 <style scoped>
@@ -86,62 +192,81 @@ const goToLogin = () => {
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 200px);
-  padding: 20px;
+  padding: 24px;
+  background: #f8f9fb;
 }
+
 .register-card {
-  background: white;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  background: #fff;
+  padding: 40px 44px;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
 }
-.register-card h1 { text-align: center; font-size: 28px; color: #1a1a2e; margin-bottom: 8px; }
-.subtitle { text-align: center; color: #999; margin-bottom: 30px; font-size: 14px; }
+
+.brand { text-align: center; margin-bottom: 32px; }
+.brand h1 { font-size: 26px; color: #1f2329; font-weight: 600; margin-bottom: 8px; letter-spacing: 1px; }
+.subtitle { color: #8a919f; font-size: 14px; line-height: 1.6; }
+
 .form-group { margin-bottom: 20px; }
-.form-group label { display: block; margin-bottom: 6px; color: #333; font-weight: 500; font-size: 14px; }
+.form-group label { display: block; margin-bottom: 8px; color: #1f2329; font-size: 14px; font-weight: 500; }
 .form-group input {
   width: 100%;
   padding: 12px 14px;
-  border: 1.5px solid #e8e8e8;
-  border-radius: 8px;
+  border: 1px solid #d9dde3;
+  border-radius: 10px;
   font-size: 15px;
+  background: #fafbfc;
   box-sizing: border-box;
+  transition: all 0.2s;
 }
-.form-group input:focus { outline: none; border-color: #FB7299; }
-.register-btn {
+.form-group input:focus {
+  outline: none;
+  border-color: #2f6fed;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.1);
+}
+
+.code-row { display: flex; gap: 10px; }
+.code-input { flex: 1; }
+.send-code-btn {
+  width: 128px;
+  flex-shrink: 0;
+  padding: 0 8px;
+  background: #eef3ff;
+  color: #2f6fed;
+  border: 1px solid #d4e0ff;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.send-code-btn:hover:not(:disabled) { background: #dfe9ff; }
+.send-code-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.submit-btn {
   width: 100%;
-  padding: 12px;
-  background: #FB7299;
-  color: white;
+  padding: 13px;
+  background: #2f6fed;
+  color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 16px;
   font-weight: 500;
+  letter-spacing: 2px;
   cursor: pointer;
-  transition: all 0.3s;
+  margin-top: 8px;
+  transition: all 0.2s;
 }
-.register-btn:hover:not(:disabled) { background: #e85a7a; }
-.register-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.error { color: #e74c3c; margin-top: 12px; text-align: center; font-size: 14px; }
-.login-link { margin-top: 20px; text-align: center; color: #666; font-size: 14px; }
-.login-link a { color: #FB7299; text-decoration: none; font-weight: 500; }
-.login-link a:hover { text-decoration: underline; }
-.success-box { text-align: center; padding: 20px 0; }
-.success-icon { font-size: 64px; margin-bottom: 16px; }
-.success-box h3 { font-size: 24px; color: #27ae60; margin-bottom: 16px; }
-.account-number { font-size: 28px; color: #FB7299; font-weight: bold; display: block; margin: 12px 0; padding: 12px; background: #f8f8f8; border-radius: 8px; }
-.login-btn-success {
-  width: 100%;
-  padding: 12px;
-  background: #FB7299;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-.login-btn-success:hover { background: #e85a7a; }
+.submit-btn:hover:not(:disabled) { background: #245cd6; }
+.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.error { color: #e5484d; margin-top: 14px; text-align: center; font-size: 14px; }
+.success { color: #30a46c; margin-top: 14px; text-align: center; font-size: 14px; }
+
+.switch-link { margin-top: 24px; text-align: center; color: #8a919f; font-size: 14px; }
+.switch-link a { color: #2f6fed; text-decoration: none; font-weight: 500; }
+.switch-link a:hover { text-decoration: underline; }
 </style>

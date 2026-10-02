@@ -1,3 +1,39 @@
+/* ===== B站风格设计令牌 ===== */
+:root {
+  /* 品牌色 */
+  --color-primary: #FB7299;
+  --color-primary-hover: #e86288;
+  --color-primary-soft: #fdf6f9;
+  --color-primary-border: #fbe4ec;
+
+  /* 文字层级 */
+  --color-text: #18191c;
+  --color-text-secondary: #61666d;
+  --color-text-muted: #9499a0;
+  --color-text-light: #c9ccd0;
+
+  /* 背景与边框 */
+  --color-bg: #ffffff;
+  --color-bg-soft: #f1f2f3;
+  --color-bg-hover: #f6f7f8;
+  --color-border: #f0f1f2;
+
+  /* 语义色 */
+  --color-success: #27ae60;
+  --color-danger: #e74c3c;
+  --color-warning: #f39c12;
+  --color-info: #3498db;
+
+  /* 圆角 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-full: 999px;
+
+  /* 阴影 */
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -6,50 +42,33 @@
 
 body {
   font-family: "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: #ffffff;
-  color: #212121;
+  background-color: #f4f6f8;
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
 }
 
-a {
-  text-decoration: none;
-}
+a { text-decoration: none; color: inherit; }
+input, textarea, button { font-family: inherit; font-size: 14px; }
+img { display: block; }
 
-input, textarea, button {
-  font-family: inherit;
-  font-size: 14px;
-}
+.container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 
-img {
-  display: block;
-}
-
-/* 通用容器，统一页面宽度边距 */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 16px;
-}
-
-/* 通用按钮样式 */
+/* 通用按钮（B站风格胶囊） */
 .btn {
-  padding: 8px 18px;
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border-radius: var(--radius-full);
   border: none;
   cursor: pointer;
-  transition: 0.2s;
+  font-size: 14px;
+  transition: all 0.2s;
 }
-.btn-primary {
-  background: #FB7299;
-  color: #fff;
-}
-.btn-primary:hover {
-  background: #e86288;
-}
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover { background: var(--color-primary-hover); }
+.btn-ghost { background: var(--color-bg-soft); color: var(--color-text-secondary); }
+.btn-ghost:hover { background: var(--color-bg-hover); }
 
-/* 空状态提示 */
-.empty-tip {
-  text-align: center;
-  padding: 60px 0;
-  color: #999;
-  font-size: 15px;
-}
+.empty-tip { text-align: center; padding: 60px 0; color: var(--color-text-muted); font-size: 15px; }

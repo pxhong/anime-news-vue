@@ -8,6 +8,7 @@ import NewsDetail from '@/pages/NewsDetail.vue'
 import Login from '@/pages/LoginView.vue'
 import Register from '@/pages/RegisterView.vue'
 import Profile from '@/pages/ProfileView.vue'
+import MyWorks from '@/pages/MyWorks.vue'  // ✅ 新增：我的投稿
 
 const routes = [
   { path: '/', redirect: '/home' },
@@ -15,6 +16,22 @@ const routes = [
   { path: '/news', name: 'News', component: News },
   { path: '/newsdetail/:id', name: 'NewsDetail', component: NewsDetail },
   { path: '/about', name: 'About', component: About },
+
+  // ✅ 新增：我的投稿（放在 /admin 之前，避免路由冲突）
+  {
+    path: '/profile/works',
+    name: 'MyWorks',
+    component: MyWorks,
+    meta: { requiresAuth: true }
+  },
+  // ✅ 新增：编辑作品（放在 /admin 之前）
+  {
+    path: '/admin/edit/:id',
+    name: 'AdminEdit',
+    component: Admin,
+    meta: { requiresAuth: true }
+  },
+
   { path: '/admin', name: 'Admin', component: Admin, meta: { requiresAuth: true } },
   { path: '/login', name: 'Login', component: Login, meta: { guest: true } },
   { path: '/register', name: 'Register', component: Register, meta: { guest: true } },

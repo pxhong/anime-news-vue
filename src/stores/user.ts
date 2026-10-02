@@ -7,6 +7,7 @@ interface User {
   account: string;
   username: string;
   email: string;
+  phone?: string | null;
   avatar: string | null;
   avatar_url?: string;
   bio: string;
@@ -33,9 +34,16 @@ export const useUserStore = defineStore('user', () => {
     }
   };
 
-  const register = async (username: string, password: string) => {
+  // 注册：邮箱+验证码+密码（后端自动生成随机昵称和账号，并返回token自动登录）
+  const register = async (email: string, code: string, password: string) => {
     try {
-      const res = await api.post('/register/', { username, password });
+      const res = await api.post('/register/', { email, code, password });
+      // 注册成功自动登录：保存 token 和用户信息
+      token.value = res.data.access;
+      localStorage.setItem('access_token', res.data.access);
+      localStorage.setItem('refresh_token', res.data.refresh);
+      user.value = res.data.user;
+      localStorage.setItem('user_info', JSON.stringify(res.data.user));
       return res;
     } catch (error) {
       console.error('注册失败:', error);

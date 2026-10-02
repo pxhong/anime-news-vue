@@ -2,10 +2,10 @@
   <div class="app">
     <header class="header">
       <div class="container nav-wrap">
-        <h1 class="logo">Anime News</h1>
+        <h1 class="logo">次元驿站</h1>
         <nav class="nav">
           <RouterLink to="/" active-class="active">首页</RouterLink>
-          <RouterLink to="/news" active-class="active">新闻列表</RouterLink>
+          <RouterLink to="/news" active-class="active">列表</RouterLink>
           <RouterLink to="/about" active-class="active">关于本站</RouterLink>
           <RouterLink 
             to="/admin" 
@@ -90,9 +90,9 @@ const userAvatar = computed(() => {
   const user = userStore.user;
   if (user?.avatar_url) {
     if (user.avatar_url.startsWith('http')) return user.avatar_url;
-    return `https://anime-news-backend-production.up.railway.app${user.avatar_url}`;
+    return `http://42.193.218.113:8000${user.avatar_url}`;
   }
-  return `https://ui-avatars.com/api/?name=${user?.username || 'User'}&background=FB7299&color=fff&size=128`;
+  return `http://ui-avatars.com/api/?name=${user?.username || 'User'}&background=FB7299&color=fff&size=128`;
 });
 
 onMounted(() => {
